@@ -1,0 +1,3785 @@
+```html
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Космічне виживання</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #02030a;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #02030a;
+}
+
+#info {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 15px;
+
+    font-size: 16px;
+    line-height: 1.5;
+
+    backdrop-filter: blur(5px);
+}
+
+/* =========================================
+   ВСТУП
+========================================= */
+
+#cutscene {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+
+    background: black;
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    transition: opacity 1.5s ease;
+}
+
+#cutsceneText {
+    max-width: 800px;
+    padding: 30px;
+}
+
+#cutsceneText h1 {
+    font-size: 42px;
+    margin-bottom: 20px;
+    transition: opacity 0.3s;
+}
+
+#cutsceneText p {
+    font-size: 22px;
+    line-height: 1.6;
+    color: #ddd;
+    transition: opacity 0.3s;
+}
+
+#skipText {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    color: #888;
+    font-size: 16px;
+}
+
+/* =========================================
+   ПАУЗА
+========================================= */
+
+#pauseScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(4px);
+
+    color: white;
+    text-align: center;
+}
+
+.pauseBox {
+    padding: 40px;
+}
+
+.pauseBox h1 {
+    font-size: 60px;
+    margin: 0 0 15px;
+}
+
+.pauseBox p {
+    font-size: 20px;
+    color: #aaa;
+}
+
+/* =========================================
+   ПОРАЗКА
+========================================= */
+
+#gameOver {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0,0,0,0.8);
+
+    color: white;
+    text-align: center;
+}
+
+.gameOverBox {
+    padding: 40px;
+    max-width: 700px;
+}
+
+.gameOverBox h1 {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.gameOverBox p {
+    color: #bbb;
+    font-size: 19px;
+}
+
+/* =========================================
+   КНОПКИ
+========================================= */
+
+button {
+    border: none;
+    border-radius: 10px;
+
+    padding: 14px 28px;
+
+    background: #ffffff;
+    color: #111;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: #ddd;
+}
+
+.modeButtons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+.infiniteButton {
+    background: #8d4dff;
+    color: white;
+}
+
+.infiniteButton:hover {
+    background: #a875ff;
+}
+
+/* =========================================
+   ПОСАДКА
+========================================= */
+
+#landingScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: black;
+
+    color: white;
+    text-align: center;
+}
+
+.landingBox {
+    padding: 40px;
+    max-width: 750px;
+}
+
+.landingIcon {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+
+.landingBox h1 {
+    font-size: 48px;
+    margin: 0 0 20px;
+}
+
+.landingBox p {
+    font-size: 20px;
+    color: #aaa;
+    margin-bottom: 15px;
+}
+
+#landingRestart {
+    background: white;
+    color: black;
+}
+
+/* =========================================
+   КОНСОЛЬ
+========================================= */
+
+#console {
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    display: none;
+
+    background: rgba(0, 0, 0, 0.88);
+
+    color: #d9d9d9;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    padding: 25px;
+}
+
+#consoleWindow {
+    width: 100%;
+    height: 100%;
+
+    max-width: 1000px;
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid #444;
+
+    background: rgba(5, 5, 8, 0.96);
+
+    box-shadow:
+        0 0 30px rgba(0,0,0,0.8);
+}
+
+#consoleHeader {
+    padding: 12px 15px;
+
+    border-bottom: 1px solid #333;
+
+    color: #aaa;
+
+    font-size: 14px;
+}
+
+#consoleOutput {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 15px;
+
+    white-space: pre-wrap;
+
+    line-height: 1.5;
+
+    font-size: 15px;
+}
+
+.consoleLine {
+    margin-bottom: 5px;
+}
+
+.consoleSuccess {
+    color: #72ff9c;
+}
+
+.consoleError {
+    color: #ff7070;
+}
+
+.consoleInfo {
+    color: #75bfff;
+}
+
+#consoleInputLine {
+    display: flex;
+
+    padding: 12px 15px;
+
+    border-top: 1px solid #333;
+}
+
+#consolePrompt {
+    color: #72ff9c;
+
+    margin-right: 8px;
+}
+
+#consoleInput {
+    flex: 1;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="info">
+    Час польоту: <span id="time">00:00</span><br>
+    Камені: <span id="rockCount">0</span>
+</div>
+
+
+<!-- =========================================
+     ВСТУП
+========================================= -->
+
+<div id="cutscene">
+
+    <div id="cutsceneText">
+
+        <h1 id="sceneTitle">
+            2893 рік
+        </h1>
+
+        <p id="sceneDescription">
+            Земля більше не може забезпечувати людство ресурсами.
+        </p>
+
+    </div>
+
+    <div id="skipText">
+        Натисніть будь-яку клавішу, щоб пропустити
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     ПАУЗА
+========================================= -->
+
+<div id="pauseScreen">
+
+    <div class="pauseBox">
+
+        <h1>⏸ ПАУЗА</h1>
+
+        <p>
+            Натисніть ESC, щоб продовжити
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     GAME OVER
+========================================= -->
+
+<div id="gameOver">
+
+    <div class="gameOverBox">
+
+        <h1>💥 Корабель знищено</h1>
+
+        <p id="gameOverText">
+            Ваш корабель зіткнувся з космічним каменем.
+        </p>
+
+        <div class="modeButtons">
+
+            <button id="restartButton">
+                🔄 Почати знову
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     УСПІШНА ПОСАДКА
+========================================= -->
+
+<div id="landingScreen">
+
+    <div class="landingBox">
+
+        <div class="landingIcon">
+            🌍
+        </div>
+
+        <h1>
+            Ви змогли приземлитися!
+        </h1>
+
+        <p>
+            Після довгих двох хвилин польоту
+            ваш корабель успішно досяг планети JD-342.
+        </p>
+
+        <p>
+            Але система повідомляє, що навколо планети
+            все ще знаходиться величезна кількість уламків...
+        </p>
+
+        <div class="modeButtons">
+
+            <button id="landingRestart">
+                🔄 Почати знову
+            </button>
+
+            <button
+                id="infiniteButton"
+                class="infiniteButton"
+            >
+                ♾️ Безкінечний режим
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     КОНСОЛЬ
+========================================= -->
+
+<div id="console">
+
+    <div id="consoleWindow">
+
+        <div id="consoleHeader">
+            SPACE SURVIVAL SYSTEM CONSOLE
+            — TAB закрити
+        </div>
+
+        <div id="consoleOutput">
+
+            <div class="consoleLine consoleInfo">
+                Космічна консоль запущена.
+            </div>
+
+            <div class="consoleLine">
+                Напишіть "help", щоб побачити доступні команди.
+            </div>
+
+        </div>
+
+        <div id="consoleInputLine">
+
+            <span id="consolePrompt">
+                &gt;
+            </span>
+
+            <input
+                id="consoleInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+            >
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================
+   CANVAS
+========================================= */
+
+const canvas =
+    document.getElementById("game");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+let W =
+    window.innerWidth;
+
+let H =
+    window.innerHeight;
+
+
+canvas.width = W;
+canvas.height = H;
+
+
+/* =========================================
+   СТАН ГРИ
+========================================= */
+
+let cutsceneFinished = false;
+
+let gameOver = false;
+
+let paused = false;
+
+let gameTime = 0;
+
+
+/*
+   2 хвилини
+*/
+
+const LANDING_TIME = 120000;
+
+
+/*
+   Затемнення — 5 секунд
+*/
+
+const FADE_DURATION = 5000;
+
+
+/*
+   Безкінечний режим
+*/
+
+let infiniteMode = false;
+
+
+/*
+   Консоль
+*/
+
+let consoleOpen = false;
+
+
+/* =========================================
+   ПОСАДКА
+========================================= */
+
+let landingStarted = false;
+
+let landingFinished = false;
+
+let landingFadeTime = 0;
+
+
+/* =========================================
+   ГРАВЕЦЬ
+========================================= */
+
+const MAX_PLAYER_SPEED = 300;
+
+
+const player = {
+
+    x: W / 2,
+
+    y: H / 2,
+
+    radius: 20,
+
+    speed: MAX_PLAYER_SPEED,
+
+    angle: -Math.PI / 2
+
+};
+
+
+/* =========================================
+   КЛАВІШІ
+========================================= */
+
+const keys = {};
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        /*
+           TAB — консоль
+        */
+
+        if (event.key === "Tab") {
+
+            event.preventDefault();
+
+            toggleConsole();
+
+            return;
+
+        }
+
+
+        /*
+           Якщо консоль відкрита —
+           решта клавіш не впливають
+           на гру.
+        */
+
+        if (consoleOpen) {
+
+            return;
+
+        }
+
+
+        /*
+           ВСТУП
+        */
+
+        if (!cutsceneFinished) {
+
+            finishCutscene();
+
+            return;
+
+        }
+
+
+        /*
+           ESC — ПАУЗА
+        */
+
+        if (key === "escape") {
+
+            event.preventDefault();
+
+
+            if (
+                !gameOver &&
+                !landingStarted &&
+                !landingFinished
+            ) {
+
+                paused = !paused;
+
+
+                document.getElementById(
+                    "pauseScreen"
+                ).style.display =
+                    paused ? "flex" : "none";
+
+
+                if (paused) {
+
+                    clearKeys();
+
+                }
+
+            }
+
+
+            return;
+
+        }
+
+
+        keys[key] = true;
+
+
+        if (
+            key === "arrowup" ||
+            key === "arrowdown" ||
+            key === "arrowleft" ||
+            key === "arrowright"
+        ) {
+
+            event.preventDefault();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        keys[key] = false;
+
+    }
+);
+
+
+function clearKeys() {
+
+    for (const key in keys) {
+
+        keys[key] = false;
+
+    }
+
+}
+
+
+/* =========================================
+   КОНСОЛЬ
+========================================= */
+
+const consoleElement =
+    document.getElementById("console");
+
+const consoleInput =
+    document.getElementById("consoleInput");
+
+const consoleOutput =
+    document.getElementById("consoleOutput");
+
+
+function toggleConsole() {
+
+    /*
+       Не дозволяємо консоль
+       під час вступу.
+    */
+
+    if (!cutsceneFinished) {
+
+        return;
+
+    }
+
+
+    consoleOpen =
+        !consoleOpen;
+
+
+    consoleElement.style.display =
+        consoleOpen ? "block" : "none";
+
+
+    if (consoleOpen) {
+
+        /*
+           Запам'ятовуємо стан
+           клавіш.
+        */
+
+        clearKeys();
+
+
+        consoleInput.focus();
+
+    }
+
+}
+
+
+function consolePrint(
+    text,
+    type = ""
+) {
+
+    const line =
+        document.createElement("div");
+
+
+    line.className =
+        "consoleLine " +
+        (
+            type
+            ?
+            "console" + type.charAt(0).toUpperCase() + type.slice(1)
+            :
+            ""
+        );
+
+
+    line.textContent =
+        text;
+
+
+    consoleOutput.appendChild(line);
+
+
+    consoleOutput.scrollTop =
+        consoleOutput.scrollHeight;
+
+}
+
+
+/*
+   Обробка команд
+*/
+
+consoleInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key !== "Enter"
+        ) {
+
+            return;
+
+        }
+
+
+        const command =
+            consoleInput.value.trim();
+
+
+        if (!command) {
+
+            return;
+
+        }
+
+
+        consolePrint(
+            "> " + command
+        );
+
+
+        executeConsoleCommand(
+            command
+        );
+
+
+        consoleInput.value = "";
+
+    }
+);
+
+
+function executeConsoleCommand(command) {
+
+    const parts =
+        command.split(/\s+/);
+
+
+    const commandName =
+        parts[0].toLowerCase();
+
+
+    /* =====================================
+       HELP
+    ===================================== */
+
+    if (
+        commandName === "help"
+    ) {
+
+        consolePrint(
+            "Доступні команди:",
+            "info"
+        );
+
+        consolePrint(
+            "skip <секунди> — пропустити час"
+        );
+
+        consolePrint(
+            "time — показати поточний час"
+        );
+
+        consolePrint(
+            "infinite — увімкнути безкінечний режим"
+        );
+
+        consolePrint(
+            "clear — очистити консоль"
+        );
+
+        return;
+
+    }
+
+
+    /* =====================================
+       SKIP
+    ===================================== */
+
+    if (
+        commandName === "skip"
+    ) {
+
+        if (
+            parts.length < 2
+        ) {
+
+            consolePrint(
+                "Помилка: використання — skip <секунди>",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const seconds =
+            Number(parts[1]);
+
+
+        if (
+            !Number.isFinite(seconds) ||
+            seconds <= 0
+        ) {
+
+            consolePrint(
+                "Помилка: введіть правильну кількість секунд.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Переводимо секунди
+           в мілісекунди.
+        */
+
+        const milliseconds =
+            seconds * 1000;
+
+
+        gameTime +=
+            milliseconds;
+
+
+        /*
+           У звичайному режимі
+           не можна перескочити
+           далі 2 хвилин без
+           запуску посадки.
+        */
+
+        if (
+            !infiniteMode &&
+            gameTime >= LANDING_TIME
+        ) {
+
+            gameTime =
+                LANDING_TIME;
+
+
+            landingStarted =
+                true;
+
+
+            landingFadeTime =
+                0;
+
+
+            clearKeys();
+
+            blackHoles = [];
+
+
+            consolePrint(
+                "Час пропущено. Починається посадка.",
+                "success"
+            );
+
+        }
+
+        else {
+
+            /*
+               Якщо це безкінечний
+               режим або ми ще
+               не дійшли до кінця.
+            */
+
+            updatePlayerSpeed();
+
+            updateUI();
+
+
+            consolePrint(
+                "Пропущено " +
+                seconds +
+                " сек. Поточний час: " +
+                formatTime(gameTime),
+                "success"
+            );
+
+        }
+
+
+        return;
+
+    }
+
+
+    /* =====================================
+       TIME
+    ===================================== */
+
+    if (
+        commandName === "time"
+    ) {
+
+        consolePrint(
+            "Поточний час: " +
+            formatTime(gameTime),
+            "info"
+        );
+
+        return;
+
+    }
+
+
+    /* =====================================
+       INFINITE
+    ===================================== */
+
+    if (
+        commandName === "infinite"
+    ) {
+
+        if (
+            infiniteMode
+        ) {
+
+            consolePrint(
+                "Безкінечний режим вже увімкнений.",
+                "info"
+            );
+
+            return;
+
+        }
+
+
+        infiniteMode = true;
+
+        landingStarted = false;
+
+        landingFinished = false;
+
+        landingFadeTime = 0;
+
+
+        document.getElementById(
+            "landingScreen"
+        ).style.display =
+            "none";
+
+
+        consolePrint(
+            "Безкінечний режим увімкнено.",
+            "success"
+        );
+
+
+        return;
+
+    }
+
+
+    /* =====================================
+       CLEAR
+    ===================================== */
+
+    if (
+        commandName === "clear"
+    ) {
+
+        consoleOutput.innerHTML = "";
+
+        return;
+
+    }
+
+
+    /*
+       Невідома команда
+    */
+
+    consolePrint(
+        "Невідома команда. Напишіть help.",
+        "error"
+    );
+
+}
+
+
+/* =========================================
+   ЗІРКИ
+========================================= */
+
+let stars = [];
+
+
+function createStars() {
+
+    stars = [];
+
+
+    const amount =
+        Math.floor(
+            (W * H) / 7000
+        );
+
+
+    for (
+        let i = 0;
+        i < amount;
+        i++
+    ) {
+
+        stars.push({
+
+            x:
+                Math.random() * W,
+
+            y:
+                Math.random() * H,
+
+            size:
+                Math.random() * 2 + 0.5,
+
+            brightness:
+                Math.random(),
+
+            speed:
+                Math.random() * 2 + 0.5
+
+        });
+
+    }
+
+}
+
+
+createStars();
+
+
+function updateStars(delta) {
+
+    for (
+        const star of stars
+    ) {
+
+        star.brightness +=
+            star.speed *
+            delta /
+            1000;
+
+
+        if (
+            star.brightness > 2
+        ) {
+
+            star.brightness = 0;
+
+        }
+
+    }
+
+}
+
+
+/* =========================================
+   ПЛАНЕТА
+========================================= */
+
+const planet = {
+
+    x:
+        W * 0.82,
+
+    y:
+        H * 0.82,
+
+    radius:
+        180
+
+};
+
+
+function updatePlanetPosition() {
+
+    planet.x =
+        W * 0.82;
+
+
+    planet.y =
+        H * 0.82;
+
+
+    planet.radius =
+        Math.min(W, H) * 0.23;
+
+}
+
+
+/* =========================================
+   КАМЕНІ
+========================================= */
+
+let rocks = [];
+
+let rockSpawnTimer = 0;
+
+let rockSpawnInterval = 700;
+
+let currentSide = 0;
+
+let sideTimer = 0;
+
+
+function spawnRock() {
+
+    let x;
+    let y;
+
+
+    const side =
+        currentSide;
+
+
+    if (
+        side === 0
+    ) {
+
+        x = -80;
+
+        y =
+            Math.random() * H;
+
+    }
+
+    else if (
+        side === 1
+    ) {
+
+        x =
+            W + 80;
+
+        y =
+            Math.random() * H;
+
+    }
+
+    else if (
+        side === 2
+    ) {
+
+        x =
+            Math.random() * W;
+
+        y = -80;
+
+    }
+
+    else {
+
+        x =
+            Math.random() * W;
+
+        y =
+            H + 80;
+
+    }
+
+
+    const angle =
+        Math.atan2(
+
+            H / 2 - y,
+
+            W / 2 - x
+
+        );
+
+
+    const speed =
+        180 +
+        Math.random() * 260;
+
+
+    const radius =
+        15 +
+        Math.random() * 25;
+
+
+    rocks.push({
+
+        x: x,
+
+        y: y,
+
+        radius: radius,
+
+        speed: speed,
+
+        vx:
+            Math.cos(angle) *
+            speed,
+
+        vy:
+            Math.sin(angle) *
+            speed,
+
+        rotation:
+            Math.random() *
+            Math.PI * 2,
+
+        rotationSpeed:
+            (Math.random() - 0.5) * 4
+
+    });
+
+}
+
+
+/* =========================================
+   ЧОРНІ ДІРИ
+========================================= */
+
+const BLACK_HOLE_START =
+    60000;
+
+
+const BLACK_HOLE_LIFE =
+    5000;
+
+
+let blackHoles = [];
+
+let blackHoleTimer = 0;
+
+
+function spawnBlackHole() {
+
+    let x;
+    let y;
+
+    let attempts = 0;
+
+
+    do {
+
+        x =
+            100 +
+            Math.random() *
+            Math.max(
+                100,
+                W - 200
+            );
+
+
+        y =
+            100 +
+            Math.random() *
+            Math.max(
+                100,
+                H - 200
+            );
+
+
+        attempts++;
+
+    }
+
+    while (
+
+        Math.hypot(
+
+            player.x - x,
+
+            player.y - y
+
+        ) < 250 &&
+
+        attempts < 30
+
+    );
+
+
+    blackHoles.push({
+
+        x: x,
+
+        y: y,
+
+        radius: 38,
+
+        gravityRadius: 300,
+
+        life:
+            BLACK_HOLE_LIFE,
+
+        maxLife:
+            BLACK_HOLE_LIFE,
+
+        rotation:
+            Math.random() *
+            Math.PI * 2
+
+    });
+
+}
+
+
+/* =========================================
+   ЧОРНІ ДІРИ — UPDATE
+========================================= */
+
+function updateBlackHoles(delta) {
+
+    if (
+        gameTime <
+        BLACK_HOLE_START
+    ) {
+
+        blackHoles = [];
+
+        return false;
+
+    }
+
+
+    blackHoleTimer +=
+        delta;
+
+
+    const timeSinceStart =
+        Math.max(
+
+            gameTime -
+            BLACK_HOLE_START,
+
+            0
+
+        );
+
+
+    let dangerProgress =
+        Math.min(
+
+            timeSinceStart /
+            60000,
+
+            1
+
+        );
+
+
+    let spawnInterval =
+        7000 -
+        dangerProgress * 4000;
+
+
+    /*
+       Безкінечний режим
+    */
+
+    if (
+        infiniteMode &&
+        gameTime > 120000
+    ) {
+
+        const infiniteTime =
+            gameTime -
+            120000;
+
+
+        spawnInterval =
+            Math.max(
+
+                1800,
+
+                3000 -
+                infiniteTime /
+                30000 *
+                500
+
+            );
+
+    }
+
+
+    if (
+        blackHoleTimer >=
+        spawnInterval
+    ) {
+
+        blackHoleTimer = 0;
+
+
+        spawnBlackHole();
+
+
+        /*
+           Друга чорна діра
+        */
+
+        if (
+            gameTime > 95000 &&
+            Math.random() < 0.30
+        ) {
+
+            spawnBlackHole();
+
+        }
+
+
+        /*
+           У безкінечному режимі
+           після 3 хвилин
+        */
+
+        if (
+            infiniteMode &&
+            gameTime > 180000 &&
+            Math.random() < 0.45
+        ) {
+
+            spawnBlackHole();
+
+        }
+
+    }
+
+
+    for (
+        const hole of blackHoles
+    ) {
+
+        hole.life -=
+            delta;
+
+
+        hole.rotation +=
+            delta * 0.0015;
+
+
+        /* =================================
+           КАМЕНІ
+        ================================= */
+
+        for (
+            const rock of rocks
+        ) {
+
+            const dx =
+                hole.x -
+                rock.x;
+
+
+            const dy =
+                hole.y -
+                rock.y;
+
+
+            const distance =
+                Math.hypot(
+                    dx,
+                    dy
+                );
+
+
+            if (
+                distance <
+                hole.gravityRadius &&
+                distance > 1
+            ) {
+
+                const force =
+                    900 *
+                    (
+                        1 -
+                        distance /
+                        hole.gravityRadius
+                    );
+
+
+                rock.vx +=
+                    dx /
+                    distance *
+                    force *
+                    delta /
+                    1000;
+
+
+                rock.vy +=
+                    dy /
+                    distance *
+                    force *
+                    delta /
+                    1000;
+
+            }
+
+
+            if (
+                distance <
+                hole.radius
+            ) {
+
+                rock.x =
+                    hole.x;
+
+                rock.y =
+                    hole.y;
+
+            }
+
+        }
+
+
+        /* =================================
+           ГРАВЕЦЬ
+        ================================= */
+
+        const playerDX =
+            hole.x -
+            player.x;
+
+
+        const playerDY =
+            hole.y -
+            player.y;
+
+
+        const playerDistance =
+            Math.hypot(
+                playerDX,
+                playerDY
+            );
+
+
+        if (
+            playerDistance <
+            hole.gravityRadius &&
+            playerDistance > 1
+        ) {
+
+            const force =
+                420 *
+                (
+                    1 -
+                    playerDistance /
+                    hole.gravityRadius
+                );
+
+
+            player.x +=
+                playerDX /
+                playerDistance *
+                force *
+                delta /
+                1000;
+
+
+            player.y +=
+                playerDY /
+                playerDistance *
+                force *
+                delta /
+                1000;
+
+        }
+
+
+        /*
+           Поглинання
+        */
+
+        if (
+            playerDistance <
+            hole.radius +
+            player.radius
+        ) {
+
+            endGame(
+                "🕳️ Корабель був поглинутий чорною дірою."
+            );
+
+            return true;
+
+        }
+
+    }
+
+
+    blackHoles =
+        blackHoles.filter(
+
+            hole =>
+                hole.life > 0
+
+        );
+
+
+    return false;
+
+}
+
+
+/* =========================================
+   СЛІД
+========================================= */
+
+let trail = [];
+
+
+function updateTrail() {
+
+    trail.push({
+
+        x:
+            player.x,
+
+        y:
+            player.y,
+
+        life:
+            1
+
+    });
+
+
+    if (
+        trail.length > 40
+    ) {
+
+        trail.shift();
+
+    }
+
+
+    for (
+        const point of trail
+    ) {
+
+        point.life -=
+            0.025;
+
+    }
+
+}
+
+
+/* =========================================
+   ЧАС
+========================================= */
+
+function formatTime(ms) {
+
+    const totalSeconds =
+        Math.floor(
+            ms / 1000
+        );
+
+
+    const minutes =
+        Math.floor(
+            totalSeconds / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    return (
+
+        String(minutes)
+            .padStart(2, "0")
+
+        +
+
+        ":"
+
+        +
+
+        String(seconds)
+            .padStart(2, "0")
+
+    );
+
+}
+
+
+function updateUI() {
+
+    document.getElementById(
+        "time"
+    ).textContent =
+        formatTime(gameTime);
+
+
+    document.getElementById(
+        "rockCount"
+    ).textContent =
+        rocks.length;
+
+}
+
+
+/* =========================================
+   ШВИДКІСТЬ
+========================================= */
+
+function updatePlayerSpeed() {
+
+    let progress =
+        Math.min(
+
+            gameTime /
+            LANDING_TIME,
+
+            1
+
+        );
+
+
+    /*
+       Безкінечний режим
+    */
+
+    if (
+        infiniteMode &&
+        gameTime > LANDING_TIME
+    ) {
+
+        const extraTime =
+            gameTime -
+            LANDING_TIME;
+
+
+        player.speed =
+            Math.max(
+
+                80,
+
+                150 -
+                extraTime /
+                1000 *
+                0.35
+
+            );
+
+
+        return;
+
+    }
+
+
+    player.speed =
+        MAX_PLAYER_SPEED *
+        (
+            1 -
+            progress * 0.5
+        );
+
+}
+
+
+/* =========================================
+   UPDATE
+========================================= */
+
+function update(delta) {
+
+    if (
+
+        !cutsceneFinished ||
+
+        gameOver ||
+
+        paused ||
+
+        landingStarted ||
+
+        landingFinished
+
+    ) {
+
+        return;
+
+    }
+
+
+    delta =
+        Math.min(
+            delta,
+            50
+        );
+
+
+    gameTime +=
+        delta;
+
+
+    /*
+       ЗВИЧАЙНИЙ РЕЖИМ
+    */
+
+    if (
+        !infiniteMode &&
+        gameTime >= LANDING_TIME
+    ) {
+
+        gameTime =
+            LANDING_TIME;
+
+
+        landingStarted =
+            true;
+
+
+        landingFadeTime =
+            0;
+
+
+        clearKeys();
+
+        blackHoles = [];
+
+
+        updateUI();
+
+        return;
+
+    }
+
+
+    updatePlayerSpeed();
+
+
+    /* =================================
+       РУХ
+    ================================= */
+
+    let dx = 0;
+
+    let dy = 0;
+
+
+    if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+
+        dx -= 1;
+
+    }
+
+
+    if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+
+        dx += 1;
+
+    }
+
+
+    if (
+        keys["arrowup"] ||
+        keys["w"]
+    ) {
+
+        dy -= 1;
+
+    }
+
+
+    if (
+        keys["arrowdown"] ||
+        keys["s"]
+    ) {
+
+        dy += 1;
+
+    }
+
+
+    if (
+        dx !== 0 ||
+        dy !== 0
+    ) {
+
+        const length =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+
+        dx /=
+            length;
+
+        dy /=
+            length;
+
+
+        player.x +=
+            dx *
+            player.speed *
+            delta /
+            1000;
+
+
+        player.y +=
+            dy *
+            player.speed *
+            delta /
+            1000;
+
+
+        player.angle =
+            Math.atan2(
+                dy,
+                dx
+            ) +
+            Math.PI / 2;
+
+    }
+
+
+    /* =================================
+       МЕЖІ
+    ================================= */
+
+    player.x =
+        Math.max(
+
+            player.radius,
+
+            Math.min(
+
+                W -
+                player.radius,
+
+                player.x
+
+            )
+
+        );
+
+
+    player.y =
+        Math.max(
+
+            player.radius,
+
+            Math.min(
+
+                H -
+                player.radius,
+
+                player.y
+
+            )
+
+        );
+
+
+    /* =================================
+       КАМЕНІ
+    ================================= */
+
+    rockSpawnTimer +=
+        delta;
+
+
+    const difficulty =
+        Math.min(
+
+            gameTime /
+            15000,
+
+            8
+
+        );
+
+
+    if (
+        infiniteMode &&
+        gameTime > 120000
+    ) {
+
+        const infiniteTime =
+            gameTime -
+            120000;
+
+
+        rockSpawnInterval =
+            Math.max(
+
+                100,
+
+                180 -
+                infiniteTime /
+                10000 *
+                8
+
+            );
+
+    }
+
+    else {
+
+        rockSpawnInterval =
+            Math.max(
+
+                180,
+
+                700 -
+                difficulty * 65
+
+            );
+
+    }
+
+
+    if (
+        rockSpawnTimer >=
+        rockSpawnInterval
+    ) {
+
+        rockSpawnTimer = 0;
+
+
+        spawnRock();
+
+
+        if (
+            gameTime > 45000 &&
+            Math.random() < 0.25
+        ) {
+
+            spawnRock();
+
+        }
+
+
+        if (
+            gameTime > 90000 &&
+            Math.random() < 0.35
+        ) {
+
+            spawnRock();
+
+        }
+
+
+        if (
+            infiniteMode &&
+            gameTime > 150000 &&
+            Math.random() < 0.35
+        ) {
+
+            spawnRock();
+
+        }
+
+    }
+
+
+    /* =================================
+       ЗМІНА СТОРОНИ
+    ================================= */
+
+    sideTimer +=
+        delta;
+
+
+    if (
+        sideTimer >= 30000
+    ) {
+
+        sideTimer = 0;
+
+
+        currentSide =
+            Math.floor(
+                Math.random() * 4
+            );
+
+    }
+
+
+    /* =================================
+       РУХ КАМЕНІВ
+    ================================= */
+
+    for (
+        const rock of rocks
+    ) {
+
+        rock.x +=
+            rock.vx *
+            delta /
+            1000;
+
+
+        rock.y +=
+            rock.vy *
+            delta /
+            1000;
+
+
+        rock.rotation +=
+            rock.rotationSpeed *
+            delta /
+            1000;
+
+    }
+
+
+    /* =================================
+       ЧОРНІ ДІРИ
+    ================================= */
+
+    if (
+        updateBlackHoles(delta)
+    ) {
+
+        return;
+
+    }
+
+
+    /* =================================
+       ВИДАЛЕННЯ
+    ================================= */
+
+    rocks =
+        rocks.filter(
+
+            rock => (
+
+                rock.x > -150 &&
+
+                rock.x < W + 150 &&
+
+                rock.y > -150 &&
+
+                rock.y < H + 150
+
+            )
+
+        );
+
+
+    /* =================================
+       СЛІД
+    ================================= */
+
+    updateTrail();
+
+
+    /* =================================
+       ЗІТКНЕННЯ
+    ================================= */
+
+    for (
+        const rock of rocks
+    ) {
+
+        const dx =
+            player.x -
+            rock.x;
+
+
+        const dy =
+            player.y -
+            rock.y;
+
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+
+        if (
+            distance <
+            player.radius +
+            rock.radius
+        ) {
+
+            endGame(
+                "Ваш корабель зіткнувся з космічним каменем."
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    updateUI();
+
+}
+
+
+/* =========================================
+   GAME OVER
+========================================= */
+
+function endGame(message) {
+
+    gameOver = true;
+
+    clearKeys();
+
+
+    document.getElementById(
+        "gameOverText"
+    ).textContent =
+        message;
+
+
+    document.getElementById(
+        "gameOver"
+    ).style.display =
+        "flex";
+
+}
+
+
+/* =========================================
+   ПЕРЕЗАПУСК
+========================================= */
+
+function restartGame() {
+
+    infiniteMode =
+        false;
+
+
+    resetGame();
+
+}
+
+
+/* =========================================
+   БЕЗКІНЕЧНИЙ РЕЖИМ
+========================================= */
+
+function startInfiniteMode() {
+
+    infiniteMode =
+        true;
+
+
+    document.getElementById(
+        "landingScreen"
+    ).style.display =
+        "none";
+
+
+    resetGame();
+
+}
+
+
+/* =========================================
+   СКИДАННЯ
+========================================= */
+
+function resetGame() {
+
+    rocks = [];
+
+    trail = [];
+
+    blackHoles = [];
+
+
+    gameTime = 0;
+
+
+    rockSpawnTimer = 0;
+
+    blackHoleTimer = 0;
+
+    sideTimer = 0;
+
+
+    currentSide = 0;
+
+
+    player.x =
+        W / 2;
+
+
+    player.y =
+        H / 2;
+
+
+    player.angle =
+        -Math.PI / 2;
+
+
+    player.speed =
+        MAX_PLAYER_SPEED;
+
+
+    gameOver = false;
+
+    paused = false;
+
+
+    landingStarted = false;
+
+    landingFinished = false;
+
+    landingFadeTime = 0;
+
+
+    clearKeys();
+
+
+    document.getElementById(
+        "gameOver"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "pauseScreen"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "landingScreen"
+    ).style.display =
+        "none";
+
+
+    updateUI();
+
+}
+
+
+/* =========================================
+   ВСТУП
+========================================= */
+
+const scenes = [
+
+    {
+        title:
+            "2893 рік",
+
+        text:
+            "Земля більше не може забезпечувати людство ресурсами."
+
+    },
+
+    {
+        title:
+            "Кінець цивілізації",
+
+        text:
+            "Міста спорожніли. Вода та їжа стали найціннішими ресурсами."
+
+    },
+
+    {
+        title:
+            "Остання надія",
+
+        text:
+            "Вчені знаходять придатну для життя планету."
+
+    },
+
+    {
+        title:
+            "JD-342",
+
+        text:
+            "Планета знаходиться за багато світлових років від Землі."
+
+    },
+
+    {
+        title:
+            "Місія",
+
+        text:
+            "Ви — один із останніх людей, які вирушили до нового дому."
+
+    },
+
+    {
+        title:
+            "Небезпека",
+
+        text:
+            "Система попереджає: навколо корабля знаходиться велика кількість уламків."
+
+    },
+
+    {
+        title:
+            "Початок польоту",
+
+        text:
+            "Ваше завдання просте: вижити та дістатися планети JD-342."
+
+    }
+
+];
+
+
+let currentScene = 0;
+
+let sceneTimer = null;
+
+
+function showScene(index) {
+
+    if (
+        cutsceneFinished
+    ) {
+
+        return;
+
+    }
+
+
+    const scene =
+        scenes[index];
+
+
+    if (!scene) {
+
+        finishCutscene();
+
+        return;
+
+    }
+
+
+    const title =
+        document.getElementById(
+            "sceneTitle"
+        );
+
+
+    const description =
+        document.getElementById(
+            "sceneDescription"
+        );
+
+
+    title.style.opacity =
+        0;
+
+
+    description.style.opacity =
+        0;
+
+
+    setTimeout(
+        () => {
+
+            if (
+                cutsceneFinished
+            ) {
+
+                return;
+
+            }
+
+
+            title.textContent =
+                scene.title;
+
+
+            description.textContent =
+                scene.text;
+
+
+            title.style.opacity =
+                1;
+
+
+            description.style.opacity =
+                1;
+
+        },
+        300
+    );
+
+
+    sceneTimer =
+        setTimeout(
+            () => {
+
+                currentScene++;
+
+                showScene(
+                    currentScene
+                );
+
+            },
+            3500
+        );
+
+}
+
+
+/* =========================================
+   ПРОПУСК ВСТУПУ
+========================================= */
+
+function finishCutscene() {
+
+    if (
+        cutsceneFinished
+    ) {
+
+        return;
+
+    }
+
+
+    cutsceneFinished =
+        true;
+
+
+    if (
+        sceneTimer
+    ) {
+
+        clearTimeout(
+            sceneTimer
+        );
+
+    }
+
+
+    const cutscene =
+        document.getElementById(
+            "cutscene"
+        );
+
+
+    cutscene.style.opacity =
+        0;
+
+
+    setTimeout(
+        () => {
+
+            cutscene.style.display =
+                "none";
+
+        },
+        1500
+    );
+
+
+    resetGame();
+
+}
+
+
+/* =========================================
+   ФОН
+========================================= */
+
+function drawBackground() {
+
+    ctx.fillStyle =
+        "#02030a";
+
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    for (
+        const star of stars
+    ) {
+
+        const brightness =
+
+            0.25 +
+
+            Math.abs(
+                Math.sin(
+                    star.brightness
+                )
+            ) *
+            0.75;
+
+
+        ctx.globalAlpha =
+            brightness;
+
+
+        ctx.fillStyle =
+            "white";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            star.x,
+
+            star.y,
+
+            star.size,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+    }
+
+
+    ctx.globalAlpha =
+        1;
+
+}
+
+
+/* =========================================
+   ПЛАНЕТА
+========================================= */
+
+function drawPlanet() {
+
+    const gradient =
+        ctx.createRadialGradient(
+
+            planet.x -
+            planet.radius * 0.4,
+
+            planet.y -
+            planet.radius * 0.4,
+
+            planet.radius * 0.1,
+
+            planet.x,
+
+            planet.y,
+
+            planet.radius
+
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "#4778a8"
+    );
+
+
+    gradient.addColorStop(
+        0.5,
+        "#204b70"
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "#071522"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        planet.x,
+
+        planet.y,
+
+        planet.radius,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "rgba(70,150,255,0.2)";
+
+
+    ctx.lineWidth =
+        15;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        planet.x,
+
+        planet.y,
+
+        planet.radius + 5,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.stroke();
+
+}
+
+
+/* =========================================
+   КАМЕНІ
+========================================= */
+
+function drawRocks() {
+
+    for (
+        const rock of rocks
+    ) {
+
+        ctx.save();
+
+
+        ctx.translate(
+            rock.x,
+            rock.y
+        );
+
+
+        ctx.rotate(
+            rock.rotation
+        );
+
+
+        ctx.fillStyle =
+            "#777";
+
+
+        ctx.beginPath();
+
+
+        const points = 8;
+
+
+        for (
+            let i = 0;
+            i < points;
+            i++
+        ) {
+
+            const angle =
+                i /
+                points *
+                Math.PI *
+                2;
+
+
+            const radius =
+                rock.radius *
+                (
+                    0.8 +
+                    0.2 *
+                    Math.sin(i * 4.7)
+                );
+
+
+            const x =
+                Math.cos(angle) *
+                radius;
+
+
+            const y =
+                Math.sin(angle) *
+                radius;
+
+
+            if (
+                i === 0
+            ) {
+
+                ctx.moveTo(
+                    x,
+                    y
+                );
+
+            }
+
+            else {
+
+                ctx.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        ctx.strokeStyle =
+            "#aaa";
+
+
+        ctx.lineWidth =
+            1;
+
+
+        ctx.stroke();
+
+
+        ctx.restore();
+
+    }
+
+}
+
+
+/* =========================================
+   ЧОРНІ ДІРИ
+========================================= */
+
+function drawBlackHoles() {
+
+    for (
+        const hole of blackHoles
+    ) {
+
+        const lifeProgress =
+            hole.life /
+            hole.maxLife;
+
+
+        let alpha = 1;
+
+
+        if (
+            lifeProgress < 0.25
+        ) {
+
+            alpha =
+                lifeProgress /
+                0.25;
+
+        }
+
+
+        ctx.save();
+
+
+        ctx.translate(
+            hole.x,
+            hole.y
+        );
+
+
+        ctx.rotate(
+            hole.rotation
+        );
+
+
+        ctx.globalAlpha =
+            alpha;
+
+
+        /*
+           Гравітаційне світіння
+        */
+
+        const glow =
+            ctx.createRadialGradient(
+
+                0,
+                0,
+
+                hole.radius * 0.5,
+
+                0,
+                0,
+
+                hole.gravityRadius
+
+            );
+
+
+        glow.addColorStop(
+            0,
+            "rgba(150,40,255,0.35)"
+        );
+
+
+        glow.addColorStop(
+            0.25,
+            "rgba(90,20,160,0.18)"
+        );
+
+
+        glow.addColorStop(
+            1,
+            "rgba(0,0,0,0)"
+        );
+
+
+        ctx.fillStyle =
+            glow;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            0,
+            0,
+
+            hole.gravityRadius,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+
+        /*
+           Зовнішнє кільце
+        */
+
+        ctx.strokeStyle =
+            "rgba(150,60,255,0.55)";
+
+
+        ctx.lineWidth =
+            8;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            0,
+            0,
+
+            hole.radius + 18,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.stroke();
+
+
+        /*
+           Акреційне кільце
+        */
+
+        ctx.strokeStyle =
+            "rgba(210,130,255,0.9)";
+
+
+        ctx.lineWidth =
+            5;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            0,
+            0,
+
+            hole.radius + 9,
+
+            0,
+            Math.PI * 1.5
+
+        );
+
+
+        ctx.stroke();
+
+
+        /*
+           Чорний центр
+        */
+
+        ctx.fillStyle =
+            "#000";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            0,
+            0,
+
+            hole.radius,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.8)";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            0,
+            0,
+
+            hole.radius * 0.75,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+
+        ctx.restore();
+
+    }
+
+
+    ctx.globalAlpha =
+        1;
+
+}
+
+
+/* =========================================
+   КОРАБЕЛЬ
+========================================= */
+
+function drawPlayer() {
+
+    /*
+       Слід
+    */
+
+    for (
+        const point of trail
+    ) {
+
+        if (
+            point.life <= 0
+        ) {
+
+            continue;
+
+        }
+
+
+        ctx.globalAlpha =
+            point.life *
+            0.35;
+
+
+        ctx.fillStyle =
+            "#65c9ff";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            point.x,
+
+            point.y,
+
+            5 *
+            point.life,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+    }
+
+
+    ctx.globalAlpha =
+        1;
+
+
+    /*
+       Світіння
+    */
+
+    const glow =
+        ctx.createRadialGradient(
+
+            player.x,
+
+            player.y,
+
+            2,
+
+            player.x,
+
+            player.y,
+
+            40
+
+        );
+
+
+    glow.addColorStop(
+
+        0,
+
+        "rgba(80,200,255,0.5)"
+
+    );
+
+
+    glow.addColorStop(
+
+        1,
+
+        "rgba(80,200,255,0)"
+
+    );
+
+
+    ctx.fillStyle =
+        glow;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        player.x,
+
+        player.y,
+
+        40,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    /*
+       Корабель
+    */
+
+    ctx.save();
+
+
+    ctx.translate(
+
+        player.x,
+
+        player.y
+
+    );
+
+
+    ctx.rotate(
+
+        player.angle
+
+    );
+
+
+    ctx.fillStyle =
+        "#dcecff";
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        0,
+        -25
+    );
+
+
+    ctx.lineTo(
+        15,
+        15
+    );
+
+
+    ctx.lineTo(
+        0,
+        10
+    );
+
+
+    ctx.lineTo(
+        -15,
+        15
+    );
+
+
+    ctx.closePath();
+
+
+    ctx.fill();
+
+
+    /*
+       Вікно
+    */
+
+    ctx.fillStyle =
+        "#2f9fd1";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        0,
+
+        -8,
+
+        6,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    /*
+       Двигун
+    */
+
+    ctx.fillStyle =
+        "#ffb84d";
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        -7,
+        10
+    );
+
+
+    ctx.lineTo(
+        0,
+        27
+    );
+
+
+    ctx.lineTo(
+        7,
+        10
+    );
+
+
+    ctx.closePath();
+
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================
+   FADE
+========================================= */
+
+function drawLandingFade() {
+
+    if (
+        !landingStarted
+    ) {
+
+        return;
+
+    }
+
+
+    const progress =
+        Math.min(
+
+            landingFadeTime /
+            FADE_DURATION,
+
+            1
+
+        );
+
+
+    ctx.fillStyle =
+        `rgba(0,0,0,${progress})`;
+
+
+    ctx.fillRect(
+
+        0,
+        0,
+        W,
+        H
+
+    );
+
+}
+
+
+/* =========================================
+   DRAW
+========================================= */
+
+function draw() {
+
+    drawBackground();
+
+    drawPlanet();
+
+    drawRocks();
+
+    drawBlackHoles();
+
+    drawPlayer();
+
+    drawLandingFade();
+
+}
+
+
+/* =========================================
+   GAME LOOP
+========================================= */
+
+let lastTime =
+    performance.now();
+
+
+function gameLoop(currentTime) {
+
+    let delta =
+        currentTime -
+        lastTime;
+
+
+    lastTime =
+        currentTime;
+
+
+    delta =
+        Math.min(
+            delta,
+            100
+        );
+
+
+    if (
+        cutsceneFinished
+    ) {
+
+        update(delta);
+
+    }
+
+    else {
+
+        updateStars(delta);
+
+    }
+
+
+    /*
+       Затемнення
+    */
+
+    if (
+
+        landingStarted &&
+
+        !landingFinished
+
+    ) {
+
+        landingFadeTime +=
+            delta;
+
+
+        if (
+
+            landingFadeTime >=
+            FADE_DURATION
+
+        ) {
+
+            landingFadeTime =
+                FADE_DURATION;
+
+
+            landingFinished =
+                true;
+
+
+            document.getElementById(
+                "landingScreen"
+            ).style.display =
+                "flex";
+
+        }
+
+    }
+
+
+    draw();
+
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+
+/* =========================================
+   КНОПКИ
+========================================= */
+
+document.getElementById(
+    "restartButton"
+).addEventListener(
+    "click",
+    restartGame
+);
+
+
+document.getElementById(
+    "landingRestart"
+).addEventListener(
+    "click",
+    restartGame
+);
+
+
+document.getElementById(
+    "infiniteButton"
+).addEventListener(
+    "click",
+    startInfiniteMode
+);
+
+
+/* =========================================
+   RESIZE
+========================================= */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        W =
+            window.innerWidth;
+
+
+        H =
+            window.innerHeight;
+
+
+        canvas.width =
+            W;
+
+
+        canvas.height =
+            H;
+
+
+        updatePlanetPosition();
+
+
+        createStars();
+
+
+        player.x =
+            Math.max(
+
+                player.radius,
+
+                Math.min(
+
+                    W -
+                    player.radius,
+
+                    player.x
+
+                )
+
+            );
+
+
+        player.y =
+            Math.max(
+
+                player.radius,
+
+                Math.min(
+
+                    H -
+                    player.radius,
+
+                    player.y
+
+                )
+
+            );
+
+    }
+);
+
+
+/* =========================================
+   СТАРТ
+========================================= */
+
+updatePlanetPosition();
+
+updateUI();
+
+showScene(0);
+
+requestAnimationFrame(
+    gameLoop
+);
+
+</script>
+
+</body>
+</html>
